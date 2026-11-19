@@ -1932,5 +1932,5 @@ git add . && git commit -m "chore: compose production profile, e2e smoke and ful
 - Task 1 的 `test_error_response_structure` 依赖 Task 2 的 RoomRequestSerializer，Task 1 单独跑会失败，Task 2 完成即转绿；这是 TDD 的正常节奏。
 - Task 10 的全局权限启用会影响前面 Task 的未认证测试；按 Task 顺序执行即可，重跑全量需加 `force_authenticate` 或临时关闭全局权限。
 - `drf-spectacular` 对 `@action` 的 request/response 推断依赖显式注解；每个新接口必须补 `@extend_schema`，否则 Task 12 的全量断言会失败——这正是本计划的强制校验点。
-- 无 git 仓库：commit 步骤在当前工作区无法执行，按 Global Constraints 处理。
+- git 仓库已初始化于工作区根目录（分支 `main`，初始提交 `d5328a3`），每个 Task 末尾的 commit 步骤为强制项，按 Global Constraints 执行。
 - PostgreSQL 数据存于 compose 具名卷 `pgdata`；生产备份策略（如 pg_dump 定时任务）未含，可后续补 Task。
