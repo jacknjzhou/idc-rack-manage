@@ -30,15 +30,19 @@ class RoomViewSet(viewsets.ModelViewSet):
         return Response(RoomResponseSerializer(obj).data, status=201)
 
     def update(self, request, *args, **kwargs):
-        s = self.get_serializer(data=request.data, partial=False); s.is_valid(raise_exception=True)
         obj = self.get_object()
+        s = self.get_serializer(data=request.data, partial=False)
+        s.instance = obj  # UniqueValidator 校验时排除自身，允许保持原 code
+        s.is_valid(raise_exception=True)
         for k, v in s.validated_data.items(): setattr(obj, k, v)
         obj.save()
         return Response(RoomResponseSerializer(obj).data)
 
     def partial_update(self, request, *args, **kwargs):
-        s = self.get_serializer(data=request.data, partial=True); s.is_valid(raise_exception=True)
         obj = self.get_object()
+        s = self.get_serializer(data=request.data, partial=True)
+        s.instance = obj  # UniqueValidator 校验时排除自身，允许保持原 code
+        s.is_valid(raise_exception=True)
         for k, v in s.validated_data.items(): setattr(obj, k, v)
         obj.save()
         return Response(RoomResponseSerializer(obj).data)
