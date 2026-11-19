@@ -1,0 +1,14 @@
+# docker-compose.prod.yml
+services:
+  web:
+    build: { target: prod }
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+    environment:
+      DEBUG: "0"
+      ALLOWED_HOSTS: "${ALLOWED_HOSTS:-localhost}"
+    restart: unless-stopped
+  frontend:
+    build: { target: prod }
+    ports: ["80:80"]
+    depends_on: [web]
+    restart: unless-stopped
