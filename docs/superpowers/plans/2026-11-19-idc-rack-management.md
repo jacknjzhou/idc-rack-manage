@@ -42,7 +42,7 @@
 - base 定义 `db`（PostgreSQL 16 + healthcheck + `pgdata` 卷）、`web`、`frontend`；dev 层加源码 bind mount、热重载、DEBUG=1。
 - 验收：`$DC config` 无报错；`$DC up -d db` 后 `$DC exec db pg_isready -U idc -d idc` 返回 accepting connections。
 
-- [ ] **Step 1: 写 base compose（含 PostgreSQL）**
+- [x] **Step 1: 写 base compose（含 PostgreSQL）**
 
 ```yaml
 # docker-compose.yml
@@ -78,7 +78,7 @@ volumes:
   pgdata:
 ```
 
-- [ ] **Step 2: 写 dev 覆盖层**
+- [x] **Step 2: 写 dev 覆盖层**
 
 ```yaml
 # docker-compose.dev.yml
@@ -93,7 +93,7 @@ services:
     environment: { DEBUG: "1" }
 ```
 
-- [ ] **Step 3: 写后端 Dockerfile（多阶段）**
+- [x] **Step 3: 写后端 Dockerfile（多阶段）**
 
 ```dockerfile
 # backend/Dockerfile
@@ -112,7 +112,7 @@ RUN python manage.py collectstatic --noinput
 CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "3"]
 ```
 
-- [ ] **Step 4: 写前端 Dockerfile（多阶段）**
+- [x] **Step 4: 写前端 Dockerfile（多阶段）**
 
 ```dockerfile
 # frontend/Dockerfile
@@ -134,7 +134,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
 ```
 
-- [ ] **Step 5: 写 .dockerignore 与 .env.example**
+- [x] **Step 5: 写 .dockerignore 与 .env.example**
 
 ```text
 # backend/.dockerignore
@@ -160,7 +160,7 @@ POSTGRES_PASSWORD=idc
 POSTGRES_PORT=5432
 ```
 
-- [ ] **Step 6: 校验 compose 配置并验证 PostgreSQL 就绪**
+- [x] **Step 6: 校验 compose 配置并验证 PostgreSQL 就绪**
 
 ```bash
 cp .env.example .env
@@ -169,7 +169,7 @@ $DC config && $DC up -d db && $DC exec db pg_isready -U idc -d idc
 ```
 Expected: config 无报错；`accepting connections`。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add docker-compose*.yml backend/Dockerfile backend/.dockerignore frontend/Dockerfile frontend/.dockerignore .env.example && git commit -m "chore: docker compose foundation with PostgreSQL"
@@ -190,7 +190,7 @@ git add docker-compose*.yml backend/Dockerfile backend/.dockerignore frontend/Do
 - 统一错误结构由 `config.exceptions.api_exception_handler` 生成；`drf-spectacular` 配置写入 settings。
 - 所有后续 Task 的 Serializer/ViewSet 必须遵循本 Task 建立的 schema 规范。
 
-- [ ] **Step 1: 写依赖清单**
+- [x] **Step 1: 写依赖清单**
 
 ```text
 # backend/requirements.txt
@@ -204,7 +204,7 @@ django-cors-headers==4.3.1
 gunicorn==22.0.0
 ```
 
-- [ ] **Step 2: 写 pytest 配置**
+- [x] **Step 2: 写 pytest 配置**
 
 ```ini
 ; backend/pytest.ini
@@ -214,7 +214,7 @@ python_files = test_*.py
 testpaths = apps config
 ```
 
-- [ ] **Step 3: 写 manage.py / wsgi / asgi（Django 标准）**
+- [x] **Step 3: 写 manage.py / wsgi / asgi（Django 标准）**
 
 ```python
 # backend/manage.py
@@ -231,7 +231,7 @@ if __name__ == "__main__":
 ```
 wsgi/asgi 用 Django 5 标准模板，`DJANGO_SETTINGS_MODULE = config.settings`。
 
-- [ ] **Step 4: 写 settings.py（PostgreSQL + drf-spectacular + 统一异常）**
+- [x] **Step 4: 写 settings.py（PostgreSQL + drf-spectacular + 统一异常）**
 
 ```python
 # backend/config/settings.py
@@ -297,7 +297,7 @@ SPECTACULAR_SETTINGS = {
 AUTH_USER_MODEL = "accounts.User"
 ```
 
-- [ ] **Step 5: 写统一异常处理器（错误响应 Schema）**
+- [x] **Step 5: 写统一异常处理器（错误响应 Schema）**
 
 ```python
 # backend/config/exceptions.py
@@ -317,7 +317,7 @@ def api_exception_handler(exc, context):
     return response
 ```
 
-- [ ] **Step 6: 写 config/urls.py（含 Schema 路由）**
+- [x] **Step 6: 写 config/urls.py（含 Schema 路由）**
 
 ```python
 # backend/config/urls.py
@@ -337,7 +337,7 @@ urlpatterns = [
 ]
 ```
 
-- [ ] **Step 7: 写冒烟测试（settings + schema + 统一错误结构）**
+- [x] **Step 7: 写冒烟测试（settings + schema + 统一错误结构）**
 
 ```python
 # backend/config/test_settings.py
@@ -379,11 +379,11 @@ def test_error_response_structure():
 
 > 说明：`test_error_response_structure` 依赖 Task 2 的 RoomRequestSerializer；若严格按 TDD，可在本 Task 先写测试、Task 2 完成后转绿。执行 Task 1 时若此测试因 Room 未建而失败，属预期，Task 2 完成即通过。
 
-- [ ] **Step 8: 建占位 app 目录与 urls 空文件**
+- [x] **Step 8: 建占位 app 目录与 urls 空文件**
 
 每个 app 建 `__init__.py`、`apps.py`、`urls.py`（`urlpatterns = []`）、`models.py`（空）、`tests/`（含 `__init__.py`）。`apps.accounts` 先建最小 `AbstractUser` 子类；`apps.audit.apps.AuditConfig`（Task 8 补 ready）。
 
-- [ ] **Step 9: 首次启动 web 并运行测试**
+- [x] **Step 9: 首次启动 web 并运行测试**
 
 ```bash
 DC="docker compose -f docker-compose.yml -f docker-compose.dev.yml"
@@ -392,7 +392,7 @@ $DC exec web pytest config/test_settings.py -v
 ```
 Expected: 3 passed（test_schema 中错误结构用例在 Task 2 后通过）。
 
-- [ ] **Step 10: Commit**
+- [x] **Step 10: Commit**
 
 ```bash
 git add backend/ && git commit -m "chore: scaffold Django backend with PostgreSQL, OpenAPI schema and unified error response"
@@ -413,7 +413,7 @@ git add backend/ && git commit -m "chore: scaffold Django backend with PostgreSQ
 - Produces: `Room` 模型；端点 `GET/POST /api/rooms/`、`GET/PUT/PATCH/DELETE /api/rooms/{id}/`。
 - **Schema**：请求用 `RoomRequestSerializer`（code 正则 `^[A-Za-z0-9_-]+$`、name 必填非空）；响应用 `RoomResponseSerializer`；ViewSet 用 `@extend_schema_view` 声明。
 
-- [ ] **Step 1: 写失败测试（正常 + 校验失败 + schema）**
+- [x] **Step 1: 写失败测试（正常 + 校验失败 + schema）**
 
 ```python
 # backend/apps/rooms/tests/test_room_api.py
@@ -448,9 +448,9 @@ def test_room_in_openapi_schema():
     assert "/api/rooms/" in r.data["paths"]
 ```
 
-- [ ] **Step 2: 运行确认失败** → Run: `... exec web pytest apps/rooms -v` → FAIL
+- [x] **Step 2: 运行确认失败** → Run: `... exec web pytest apps/rooms -v` → FAIL
 
-- [ ] **Step 3: 写模型**
+- [x] **Step 3: 写模型**
 
 ```python
 # backend/apps/rooms/models.py
@@ -466,7 +466,7 @@ class Room(models.Model):
         return f"{self.code} {self.name}"
 ```
 
-- [ ] **Step 4: 写 Request/Response Schema Serializer**
+- [x] **Step 4: 写 Request/Response Schema Serializer**
 
 ```python
 # backend/apps/rooms/serializers.py
@@ -489,7 +489,7 @@ class RoomResponseSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 ```
 
-- [ ] **Step 5: 写 ViewSet（带 schema 注解）**
+- [x] **Step 5: 写 ViewSet（带 schema 注解）**
 
 ```python
 # backend/apps/rooms/views.py
@@ -550,9 +550,9 @@ router.register("rooms", RoomViewSet, basename="room")
 urlpatterns = router.urls
 ```
 
-- [ ] **Step 6: 运行确认通过** → Run: `... exec web pytest apps/rooms -v` → 4 passed
+- [x] **Step 6: 运行确认通过** → Run: `... exec web pytest apps/rooms -v` → 4 passed
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/apps/rooms && git commit -m "feat: room CRUD with request/response schema validation"
@@ -573,7 +573,7 @@ git add backend/apps/rooms && git commit -m "feat: room CRUD with request/respon
 - Produces: `Rack` 模型；端点 `/api/racks/`（CRUD）+ Task 9 的 usage/uplan/export。
 - **Schema**：`RackRequestSerializer` 校验 room（存在）、name、location_code（正则）、total_u（1–100）、rated_power_kw（>0）、max_weight_kg（>0）、current_load_kw（可空 ≥0）、metrics_endpoint（可空 URL）；响应 `RackResponseSerializer`。
 
-- [ ] **Step 1: 写失败测试（含校验失败与 schema）**
+- [x] **Step 1: 写失败测试（含校验失败与 schema）**
 
 ```python
 # backend/apps/racks/tests/test_rack_api.py
@@ -607,9 +607,9 @@ def test_rack_in_openapi_schema():
     assert "/api/racks/" in APIClient().get("/api/schema/").data["paths"]
 ```
 
-- [ ] **Step 2: 运行确认失败** → FAIL
+- [x] **Step 2: 运行确认失败** → FAIL
 
-- [ ] **Step 3: 写模型（字段同前版）**
+- [x] **Step 3: 写模型（字段同前版）**
 
 ```python
 # backend/apps/racks/models.py
@@ -631,7 +631,7 @@ class Rack(models.Model):
         return self.location_code
 ```
 
-- [ ] **Step 4: 写 Request/Response Schema（含校验规则）**
+- [x] **Step 4: 写 Request/Response Schema（含校验规则）**
 
 ```python
 # backend/apps/racks/serializers.py
@@ -661,13 +661,13 @@ class RackResponseSerializer(serializers.ModelSerializer):
 
 > `room` 的 queryset 直接写 `from apps.rooms.models import Room` 更清晰：实际文件里把 `__import__...` 换成顶部 `from apps.rooms.models import Room` 并写 `queryset=Room.objects.all()`。
 
-- [ ] **Step 5: 写 ViewSet（沿用 Task 2 模式 + schema 注解）**
+- [x] **Step 5: 写 ViewSet（沿用 Task 2 模式 + schema 注解）**
 
 `@extend_schema_view(create/update/partial_update → request=RackRequestSerializer, responses=RackResponseSerializer; list/retrieve → responses=RackResponseSerializer(many=True)/...; tags=["机柜"])`；`get_serializer_class` 与 create/update/partial_update 实现同 Task 2。
 
-- [ ] **Step 6: 运行确认通过** → Run: `... exec web pytest apps/racks -v` → 3 passed
+- [x] **Step 6: 运行确认通过** → Run: `... exec web pytest apps/racks -v` → 3 passed
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/apps/racks && git commit -m "feat: rack CRUD with schema validation"
@@ -687,7 +687,7 @@ git add backend/apps/racks && git commit -m "feat: rack CRUD with schema validat
 - `Device` 模型；端点 `/api/devices/`。
 - **Schema**：`asset_no` 正则、`power_w ≥ 0`、`weight_kg ≥ 0`、`u_size` 1–10、`status` 枚举，`ip_addresses` 为字符串数组（每项 IP 正则）。
 
-- [ ] **Step 1: 写失败测试（含校验失败）**
+- [x] **Step 1: 写失败测试（含校验失败）**
 
 ```python
 # backend/apps/devices/tests/test_device_api.py
@@ -716,9 +716,9 @@ def test_invalid_ip_returns_400():
     assert r.status_code == 400 and "ip_addresses" in r.data["fields"]
 ```
 
-- [ ] **Step 2: 运行确认失败** → FAIL
+- [x] **Step 2: 运行确认失败** → FAIL
 
-- [ ] **Step 3: 写模型（字段同前版）**
+- [x] **Step 3: 写模型（字段同前版）**
 
 ```python
 # backend/apps/devices/models.py
@@ -742,7 +742,7 @@ class Device(models.Model):
         return f"{self.asset_no} {self.name}"
 ```
 
-- [ ] **Step 4: 写 Request/Response Schema**
+- [x] **Step 4: 写 Request/Response Schema**
 
 ```python
 # backend/apps/devices/serializers.py
@@ -783,11 +783,11 @@ class DeviceResponseSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 ```
 
-- [ ] **Step 5: 写 ViewSet（沿用 Task 2 模式 + schema 注解 tags=["设备"]）**
+- [x] **Step 5: 写 ViewSet（沿用 Task 2 模式 + schema 注解 tags=["设备"]）**
 
-- [ ] **Step 6: 运行确认通过** → Run: `... exec web pytest apps/devices -v` → 3 passed
+- [x] **Step 6: 运行确认通过** → Run: `... exec web pytest apps/devices -v` → 3 passed
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add backend/apps/devices && git commit -m "feat: device CRUD with schema validation"
@@ -807,7 +807,7 @@ git add backend/apps/devices && git commit -m "feat: device CRUD with schema val
 - 口径：U位统计 `status in ('active','reserved')`；功率/重量只统计 `status == 'active'`。
 - 本 Task 为领域服务，无 HTTP 接口；schema 约束从 Task 7 开始覆盖 Placement API。
 
-- [ ] **Step 1: 写失败测试（同前版两个用例）**
+- [x] **Step 1: 写失败测试（同前版两个用例）**
 
 ```python
 # backend/apps/placements/tests/test_capacity.py
@@ -848,9 +848,9 @@ def test_usage_counts_power_only_active(rack):
     assert u["used_power_w"] == Decimal("300") and u["used_weight_kg"] == Decimal("15")
 ```
 
-- [ ] **Step 2: 运行确认失败** → FAIL
+- [x] **Step 2: 运行确认失败** → FAIL
 
-- [ ] **Step 3: 写 Placement 模型（字段同前版）**
+- [x] **Step 3: 写 Placement 模型（字段同前版）**
 
 ```python
 # backend/apps/placements/models.py
@@ -874,7 +874,7 @@ class Placement(models.Model):
         return f"{self.rack}/{self.face}/{self.start_u}+{self.u_size}"
 ```
 
-- [ ] **Step 4: 写容量服务（纯函数，同前版）**
+- [x] **Step 4: 写容量服务（纯函数，同前版）**
 
 ```python
 # backend/apps/placements/services.py
@@ -909,7 +909,7 @@ def get_rack_usage(rack: Rack) -> dict:
     }
 ```
 
-- [ ] **Step 5: 迁移并运行确认通过**
+- [x] **Step 5: 迁移并运行确认通过**
 
 ```bash
 DC="docker compose -f docker-compose.yml -f docker-compose.dev.yml"
@@ -917,7 +917,7 @@ $DC exec web sh -c "python manage.py makemigrations rooms racks devices placemen
 ```
 Expected: 2 passed
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend && git commit -m "feat: Placement model and rack capacity calculation"
@@ -934,7 +934,7 @@ git add backend && git commit -m "feat: Placement model and rack capacity calcul
 **Interfaces:**
 - `validate_placement(...)`、`get_warnings(rack)`、`LOAD_WARN_RATIO = Decimal("0.8")`；规则同前版。
 
-- [ ] **Step 1–2: 写失败测试并确认 FAIL（同前版 6 用例）**
+- [x] **Step 1–2: 写失败测试并确认 FAIL（同前版 6 用例）**
 
 ```python
 # backend/apps/placements/tests/test_validation.py
@@ -986,7 +986,7 @@ def test_load_warning_only(rack):
     assert LOAD_WARN_RATIO == Decimal("0.8")
 ```
 
-- [ ] **Step 3: 写校验实现（同前版）**
+- [x] **Step 3: 写校验实现（同前版）**
 
 ```python
 # backend/apps/placements/validation.py
@@ -1023,9 +1023,9 @@ def get_warnings(rack: Rack) -> list:
     return warns
 ```
 
-- [ ] **Step 4: 运行确认通过** → 6 passed
+- [x] **Step 4: 运行确认通过** → 6 passed
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/apps/placements && git commit -m "feat: capacity validation rules with warnings"
@@ -1045,7 +1045,7 @@ git add backend/apps/placements && git commit -m "feat: capacity validation rule
 - `POST /api/placements/{id}/remove/` 下架；`POST /api/placements/{id}/move/` 移位（body `{rack, face, start_u}`，`MoveRequestSerializer`）。
 - **Schema**：三个 Serializer + `@extend_schema_view` 注解（含 remove/move 的 `@action` 注解 `request=...`）。
 
-- [ ] **Step 1: 写失败测试（含参数校验失败）**
+- [x] **Step 1: 写失败测试（含参数校验失败）**
 
 ```python
 # backend/apps/placements/tests/test_placement_api.py
@@ -1115,9 +1115,9 @@ def test_move_to_other_rack(setup):
     assert obj.rack_id == rack2.id and obj.start_u == 3
 ```
 
-- [ ] **Step 2: 运行确认失败** → FAIL
+- [x] **Step 2: 运行确认失败** → FAIL
 
-- [ ] **Step 3: 写三个 Schema Serializer**
+- [x] **Step 3: 写三个 Schema Serializer**
 
 ```python
 # backend/apps/placements/serializers.py
@@ -1146,7 +1146,7 @@ class PlacementResponseSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 ```
 
-- [ ] **Step 4: 写 ViewSet（schema 注解 + 业务校验）**
+- [x] **Step 4: 写 ViewSet（schema 注解 + 业务校验）**
 
 ```python
 # backend/apps/placements/views.py
@@ -1221,9 +1221,9 @@ router.register("placements", PlacementViewSet, basename="placement")
 urlpatterns = router.urls
 ```
 
-- [ ] **Step 5: 运行确认通过** → Run: `... exec web pytest apps/placements -v` → all passed
+- [x] **Step 5: 运行确认通过** → Run: `... exec web pytest apps/placements -v` → all passed
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/apps/placements && git commit -m "feat: placement API with schema-validated place/remove/move"
@@ -1243,7 +1243,7 @@ git add backend/apps/placements && git commit -m "feat: placement API with schem
 - `AuditLog` 模型；`GET /api/auditlog/`（只读）。
 - **Schema**：`AuditLogResponseSerializer` 定义响应；`@extend_schema(responses={200: AuditLogResponseSerializer(many=True)})`；无请求体（只读接口）。
 
-- [ ] **Step 1: 写失败测试（含 schema）**
+- [x] **Step 1: 写失败测试（含 schema）**
 
 ```python
 # backend/apps/audit/tests/test_audit.py
@@ -1269,9 +1269,9 @@ def test_audit_in_openapi_schema():
 ```
 > 需 `from rest_framework.test import APIClient`。
 
-- [ ] **Step 2: 运行确认失败** → FAIL
+- [x] **Step 2: 运行确认失败** → FAIL
 
-- [ ] **Step 3: 写模型 + 信号（同前版）**
+- [x] **Step 3: 写模型 + 信号（同前版）**
 
 ```python
 # backend/apps/audit/models.py
@@ -1346,7 +1346,7 @@ class AuditConfig(AppConfig):
             signals.register_audit(m)
 ```
 
-- [ ] **Step 4: 写响应 Schema / ViewSet / urls**
+- [x] **Step 4: 写响应 Schema / ViewSet / urls**
 
 ```python
 # backend/apps/audit/serializers.py
@@ -1386,9 +1386,9 @@ router.register("auditlog", AuditLogViewSet, basename="auditlog")
 urlpatterns = router.urls
 ```
 
-- [ ] **Step 5: 运行确认通过** → Run: `... exec web pytest apps/audit -v` → 3 passed
+- [x] **Step 5: 运行确认通过** → Run: `... exec web pytest apps/audit -v` → 3 passed
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend && git commit -m "feat: audit log via signals with response schema"
@@ -1410,7 +1410,7 @@ git add backend && git commit -m "feat: audit log via signals with response sche
 - `GET /api/racks/{id}/export_devices/` → CSV（`@extend_schema(responses={(200, "text/csv"): OpenApiTypes.BINARY})`）。
 - 三个 `@action` 均带 `@extend_schema(request=None, responses=..., tags=["机柜视图"])`。
 
-- [ ] **Step 1: 写失败测试（含 schema 与参数校验）**
+- [x] **Step 1: 写失败测试（含 schema 与参数校验）**
 
 ```python
 # backend/apps/racks/tests/test_rack_usage_api.py
@@ -1460,9 +1460,9 @@ def test_rack_actions_in_openapi_schema():
     assert any("export_devices" in p for p in paths)
 ```
 
-- [ ] **Step 2: 运行确认失败** → FAIL
+- [x] **Step 2: 运行确认失败** → FAIL
 
-- [ ] **Step 3: 写响应 Schema 与 reporting 服务**
+- [x] **Step 3: 写响应 Schema 与 reporting 服务**
 
 ```python
 # backend/apps/racks/schema.py
@@ -1523,7 +1523,7 @@ def export_devices_csv(rack):
     return buf.getvalue()
 ```
 
-- [ ] **Step 4: 在 RackViewSet 加带 schema 注解的 actions**
+- [x] **Step 4: 在 RackViewSet 加带 schema 注解的 actions**
 
 ```python
 # 追加到 backend/apps/racks/views.py
@@ -1555,9 +1555,9 @@ from .schema import UsageResponseSerializer, UPlanResponseSerializer
         return resp
 ```
 
-- [ ] **Step 5: 运行确认通过** → Run: `... exec web pytest apps/racks -v` → all passed
+- [x] **Step 5: 运行确认通过** → Run: `... exec web pytest apps/racks -v` → all passed
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/apps/racks && git commit -m "feat: rack usage/uplan/export endpoints with response schemas"
@@ -1575,7 +1575,7 @@ git add backend/apps/racks && git commit -m "feat: rack usage/uplan/export endpo
 **Interfaces:**
 - `User`（AbstractUser + role）；权限类 `IsAdminOrOperatorOrReadOnly`。
 
-- [ ] **Step 1: 写失败测试（同前版）**
+- [x] **Step 1: 写失败测试（同前版）**
 
 ```python
 # backend/apps/accounts/tests/test_roles.py
@@ -1598,9 +1598,9 @@ def test_operator_can_write():
     assert c.post("/api/rooms/", {"code": "R1", "name": "一号"}, format="json").status_code == 201
 ```
 
-- [ ] **Step 2: 运行确认失败** → FAIL
+- [x] **Step 2: 运行确认失败** → FAIL
 
-- [ ] **Step 3: 写模型与权限类（同前版）**
+- [x] **Step 3: 写模型与权限类（同前版）**
 
 ```python
 # backend/apps/accounts/models.py
@@ -1624,16 +1624,16 @@ class IsAdminOrOperatorOrReadOnly(BasePermission):
                     and request.user.role in ("admin", "operator"))
 ```
 
-- [ ] **Step 4: 全局启用权限**
+- [x] **Step 4: 全局启用权限**
 
 在 `config/settings.py` 的 `REST_FRAMEWORK` 增加：
 `"DEFAULT_PERMISSION_CLASSES": ["apps.accounts.permissions.IsAdminOrOperatorOrReadOnly"]`
 
 > 本 Task 放最后；前面 Task 的未认证测试在权限启用前运行。重跑全量需加 `force_authenticate` 或临时关闭。
 
-- [ ] **Step 5: 运行确认通过** → `... exec web pytest apps/accounts -v` → 2 passed；全量 `... exec web pytest -v` 无回归。
+- [x] **Step 5: 运行确认通过** → `... exec web pytest apps/accounts -v` → 2 passed；全量 `... exec web pytest -v` 无回归。
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend && git commit -m "feat: user roles and read-only permission policy"
@@ -1652,7 +1652,7 @@ git add backend && git commit -m "feat: user roles and read-only permission poli
 - 消费 Task 9 的 `/api/racks/{id}/uplan/` 与 `/usage/`（响应结构严格对齐 Schema）。
 - **前端按统一错误结构解析**：`apiGet` 失败时抛出 `err.message`（来自 `{code,message,fields}`）。
 
-- [ ] **Step 1: 写失败测试（同前版）**
+- [x] **Step 1: 写失败测试（同前版）**
 
 ```ts
 // frontend/src/components/__tests__/RackUPlan.spec.ts
@@ -1679,9 +1679,9 @@ describe("RackUPlan", () => {
 })
 ```
 
-- [ ] **Step 2: 运行确认失败** → FAIL
+- [x] **Step 2: 运行确认失败** → FAIL
 
-- [ ] **Step 3: 写前端配置与 api.ts（解析统一错误结构）**
+- [x] **Step 3: 写前端配置与 api.ts（解析统一错误结构）**
 
 ```json
 // frontend/package.json
@@ -1711,7 +1711,7 @@ export async function apiGet<T = any>(url: string): Promise<T> {
 
 `vite.config.ts` 配 vue 插件 + `server.proxy` 把 `/api` 代理到 `http://web:8000`；`vitest.config.ts` 同插件、environment `jsdom`；`index.html` 挂载 `#app`。
 
-- [ ] **Step 4: 写 RackUPlan.vue（同前版）**
+- [x] **Step 4: 写 RackUPlan.vue（同前版）**
 
 ```vue
 <!-- frontend/src/components/RackUPlan.vue -->
@@ -1761,11 +1761,11 @@ const cells = (face: string) => [...(uplan.value[face] || [])].map((c, i) => ({ 
 </style>
 ```
 
-- [ ] **Step 5: 写 App.vue / main.ts / RackView.vue（最小壳）**
+- [x] **Step 5: 写 App.vue / main.ts / RackView.vue（最小壳）**
 
-- [ ] **Step 6: 运行确认通过（容器内）** → `$DC exec frontend npm test` → 1 passed；`npm run build` 成功。
+- [x] **Step 6: 运行确认通过（容器内）** → `$DC exec frontend npm test` → 1 passed；`npm run build` 成功。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add frontend && git commit -m "feat: Vue scaffold, rack U-position visualization and API error parsing"
@@ -1784,7 +1784,7 @@ git add frontend && git commit -m "feat: Vue scaffold, rack U-position visualiza
 - 生产：`docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build`（db + web:8000 gunicorn + frontend:80 nginx；db/卷从 base 继承）。
 - 端到端覆盖"建档→上架→容量变化→下架→容量恢复→审计存在"；Schema 全量断言覆盖所有端点的 OpenAPI 声明。
 
-- [ ] **Step 1: 写端到端冒烟测试**
+- [x] **Step 1: 写端到端冒烟测试**
 
 ```python
 # backend/apps/placements/tests/test_smoke_e2e.py
@@ -1813,7 +1813,7 @@ def test_full_lifecycle():
     assert AuditLog.objects.exists()
 ```
 
-- [ ] **Step 2: 写 Schema 全量覆盖测试（核心验收）**
+- [x] **Step 2: 写 Schema 全量覆盖测试（核心验收）**
 
 ```python
 # backend/config/test_schema_coverage.py
@@ -1858,7 +1858,7 @@ def test_validation_error_shape_is_consistent():
 
 > 注意：`POST /api/placements/{id}/remove/` 无请求体（request=None），故全量断言中排除；其他写操作必须有 requestBody schema。
 
-- [ ] **Step 3: 写 prod 覆盖层**
+- [x] **Step 3: 写 prod 覆盖层**
 
 ```yaml
 # docker-compose.prod.yml
@@ -1878,7 +1878,7 @@ services:
 ```
 > db 服务与 `pgdata` 卷从 base 继承，生产同样用 PostgreSQL 16。
 
-- [ ] **Step 4: 写 nginx.conf**
+- [x] **Step 4: 写 nginx.conf**
 
 ```nginx
 # frontend/nginx.conf
@@ -1895,9 +1895,9 @@ server {
 }
 ```
 
-- [ ] **Step 5: 校验 prod compose 配置** → `docker compose -f docker-compose.yml -f docker-compose.prod.yml config` → 无报错（无 docker 则记录跳过）。
+- [x] **Step 5: 校验 prod compose 配置** → `docker compose -f docker-compose.yml -f docker-compose.prod.yml config` → 无报错（无 docker 则记录跳过）。
 
-- [ ] **Step 6: 容器内全量测试**
+- [x] **Step 6: 容器内全量测试**
 
 ```bash
 DC="docker compose -f docker-compose.yml -f docker-compose.dev.yml"
@@ -1906,7 +1906,7 @@ $DC exec frontend npm test
 ```
 Expected: 全部通过（含 Schema 全量覆盖测试）。
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add . && git commit -m "chore: compose production profile, e2e smoke and full OpenAPI schema coverage"
