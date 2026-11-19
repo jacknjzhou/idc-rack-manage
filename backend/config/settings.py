@@ -44,12 +44,21 @@ LANGUAGE_CODE = "zh-hans"
 TIME_ZONE = "Asia/Shanghai"
 USE_TZ = True
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Test-only bypass: lets the full regression suite exercise business logic
+# without per-test force_authenticate. Production/default keeps permissions ON.
+IDC_DISABLE_PERMISSIONS = os.environ.get("IDC_DISABLE_PERMISSIONS", "0") == "1"
+
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework.authentication.SessionAuthentication",
         "rest_framework.authentication.BasicAuthentication"],
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "config.exceptions.api_exception_handler",
+    "DEFAULT_PERMISSION_CLASSES": (
+        [] if IDC_DISABLE_PERMISSIONS
+        else ["apps.accounts.permissions.IsAdminOrOperatorOrReadOnly"]
+    ),
 }
 SPECTACULAR_SETTINGS = {
     "TITLE": "IDC 机柜管理 API",
