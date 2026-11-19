@@ -1,8 +1,12 @@
+from django.http import HttpResponse
 from rest_framework import viewsets
+from rest_framework.decorators import action
 from rest_framework.response import Response
-from drf_spectacular.utils import extend_schema_view, extend_schema
+from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiTypes
 from .models import Rack
 from .serializers import RackRequestSerializer, RackResponseSerializer
+from .reporting import usage_payload, uplan_payload, export_devices_csv
+from .schema import UsageResponseSerializer, UPlanResponseSerializer
 
 
 @extend_schema_view(
@@ -50,3 +54,22 @@ class RackViewSet(viewsets.ModelViewSet):
             setattr(obj, k, v)
         obj.save()
         return Response(RackResponseSerializer(obj).data)
+
+    @extend_schema(request=None, responses={200: UsageResponseSerializer}, tags=["机柜视图"])
+    @action(detail=True, methods=["get"])
+    def usage(self, request, pk=None):
+        return Response(usage_payload(self.get_object()))
+
+    @extend_schema(request=None, responses={200: UPlanResponseSerializer}, tags=["机柜视图"])
+    @action(detail=True, methods=["get"])
+    def uplan(self, request, pk=None):
+        return Response(uplan_payload(self.get_object()))
+
+    @extend_schema(request=None,
+                   responses={(200, "text/csv"): OpenApiTypes.BINARY}, tags=["机柜视图"])
+    @action(detail=True, methods=["get"])
+    def export_devices(self, request, pk=None):
+        resp = HttpResponse(export_devices_csv(self.get_object()),
+                            content_type="text/csv; charset=utf-8")
+        resp["Content-Disposition"] = 'attachment; filename="devices.csv"'
+        return resp
