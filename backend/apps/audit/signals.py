@@ -1,5 +1,6 @@
 from django.db.models.signals import post_save, post_delete, pre_save
 
+from .middleware import get_current_user
 from .models import AuditLog
 
 _MODELS = []
@@ -27,12 +28,15 @@ def _handler(sender, instance, **kwargs):
     if sender not in _MODELS:
         return
     target = f"{sender.__name__}:{getattr(instance, 'pk', '?')}"
+    operator = get_current_user()
     if kwargs.get("created"):
-        AuditLog.objects.create(action="create", target=target, before={}, after=_snapshot(instance))
+        AuditLog.objects.create(action="create", target=target, operator=operator,
+                                before={}, after=_snapshot(instance))
     elif kwargs.get("signal") is post_delete:
-        AuditLog.objects.create(action="delete", target=target, before=_snapshot(instance), after={})
+        AuditLog.objects.create(action="delete", target=target, operator=operator,
+                                before=_snapshot(instance), after={})
     else:
-        AuditLog.objects.create(action="update", target=target,
+        AuditLog.objects.create(action="update", target=target, operator=operator,
                                 before=getattr(instance, "_audit_before", {}),
                                 after=_snapshot(instance))
 

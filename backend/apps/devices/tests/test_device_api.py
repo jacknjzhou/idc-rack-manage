@@ -1,6 +1,10 @@
 import pytest
+from decimal import Decimal
 from rest_framework.test import APIClient
 from apps.devices.models import Device
+from apps.rooms.models import Room
+from apps.racks.models import Rack
+from apps.placements.models import Placement
 
 
 @pytest.mark.django_db
@@ -68,3 +72,49 @@ def test_update_with_own_asset_no_succeeds():
     payload["name"] = "改名"
     r2 = c.put(f"/api/devices/{device_id}/", payload, format="json")
     assert r2.status_code == 200, r2.content
+
+
+# ---- update-time capacity validation (placed devices) ----
+
+def _mk_placed_device():
+    room = Room.objects.create(code="R1", name="一号")
+    rack = Rack.objects.create(room=room, name="A", location_code="A-01",
+                               total_u=42, rated_power_kw=Decimal("4.0"),
+                               max_weight_kg=Decimal("800"))
+    device = Device.objects.create(asset_no="AST-P", name="服务器",
+                                   power_w=Decimal("3000"), weight_kg=Decimal("500"), u_size=2)
+    Placement.objects.create(device=device, rack=rack, face="A", start_u=1, u_size=2,
+                             status="active")
+    return device
+
+
+@pytest.mark.django_db
+def test_device_put_raising_power_beyond_rack_budget_returns_400():
+    """已上架设备 PUT 把功率抬到机柜预算之上必须 400。"""
+    device = _mk_placed_device()
+    r = APIClient().put(f"/api/devices/{device.id}/", {
+        "asset_no": "AST-P", "name": "服务器", "power_w": "5000",
+        "weight_kg": "500", "u_size": 2}, format="json")
+    assert r.status_code == 400, r.content
+    assert set(r.data.keys()) == {"code", "message", "fields"}
+
+
+@pytest.mark.django_db
+def test_device_put_raising_weight_beyond_rack_limit_returns_400():
+    """已上架设备 PUT 把承重抬到机柜上限之上必须 400。"""
+    device = _mk_placed_device()
+    r = APIClient().put(f"/api/devices/{device.id}/", {
+        "asset_no": "AST-P", "name": "服务器", "power_w": "3000",
+        "weight_kg": "900", "u_size": 2}, format="json")
+    assert r.status_code == 400, r.content
+
+
+@pytest.mark.django_db
+def test_device_put_legal_update_still_200():
+    """未超出预算的合法更新（含未上架设备）必须照常 200。"""
+    device = _mk_placed_device()
+    r = APIClient().put(f"/api/devices/{device.id}/", {
+        "asset_no": "AST-P", "name": "服务器-改", "power_w": "2000",
+        "weight_kg": "400", "u_size": 2}, format="json")
+    assert r.status_code == 200, r.content
+    assert r.data["power_w"] == "2000.00"

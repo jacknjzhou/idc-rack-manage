@@ -1,9 +1,12 @@
 from rest_framework import viewsets
+from rest_framework.exceptions import ValidationError as DRFValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema_view, extend_schema
 
 from .models import Device
 from .serializers import DeviceRequestSerializer, DeviceResponseSerializer
+from apps.placements.validation import validate_device_update
 
 
 @extend_schema_view(
@@ -37,7 +40,13 @@ class DeviceViewSet(viewsets.ModelViewSet):
         s = self.get_serializer(data=request.data, partial=False)
         s.instance = obj  # UniqueValidator 校验时排除自身，允许保持原 asset_no
         s.is_valid(raise_exception=True)
-        for k, v in s.validated_data.items():
+        d = s.validated_data
+        try:
+            validate_device_update(obj, d.get("power_w", obj.power_w),
+                                   d.get("weight_kg", obj.weight_kg))
+        except DjangoValidationError as e:
+            raise DRFValidationError(e.messages)
+        for k, v in d.items():
             setattr(obj, k, v)
         obj.save()
         return Response(DeviceResponseSerializer(obj).data)
@@ -47,7 +56,13 @@ class DeviceViewSet(viewsets.ModelViewSet):
         s = self.get_serializer(data=request.data, partial=True)
         s.instance = obj  # UniqueValidator 校验时排除自身，允许保持原 asset_no
         s.is_valid(raise_exception=True)
-        for k, v in s.validated_data.items():
+        d = s.validated_data
+        try:
+            validate_device_update(obj, d.get("power_w", obj.power_w),
+                                   d.get("weight_kg", obj.weight_kg))
+        except DjangoValidationError as e:
+            raise DRFValidationError(e.messages)
+        for k, v in d.items():
             setattr(obj, k, v)
         obj.save()
         return Response(DeviceResponseSerializer(obj).data)

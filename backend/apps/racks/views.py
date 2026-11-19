@@ -1,12 +1,15 @@
 from django.http import HttpResponse
 from rest_framework import viewsets
 from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError as DRFValidationError
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.response import Response
 from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiTypes
 from .models import Rack
 from .serializers import RackRequestSerializer, RackResponseSerializer
 from .reporting import usage_payload, uplan_payload, export_devices_csv
 from .schema import UsageResponseSerializer, UPlanResponseSerializer
+from apps.placements.validation import validate_rack_update
 
 
 @extend_schema_view(
@@ -40,7 +43,14 @@ class RackViewSet(viewsets.ModelViewSet):
         s = self.get_serializer(data=request.data, partial=False)
         s.instance = obj  # UniqueValidator 校验时排除自身，允许保持原 location_code
         s.is_valid(raise_exception=True)
-        for k, v in s.validated_data.items():
+        d = s.validated_data
+        try:
+            validate_rack_update(obj, d.get("total_u", obj.total_u),
+                                 d.get("rated_power_kw", obj.rated_power_kw),
+                                 d.get("max_weight_kg", obj.max_weight_kg))
+        except DjangoValidationError as e:
+            raise DRFValidationError(e.messages)
+        for k, v in d.items():
             setattr(obj, k, v)
         obj.save()
         return Response(RackResponseSerializer(obj).data)
@@ -50,7 +60,14 @@ class RackViewSet(viewsets.ModelViewSet):
         s = self.get_serializer(data=request.data, partial=True)
         s.instance = obj  # UniqueValidator 校验时排除自身，允许保持原 location_code
         s.is_valid(raise_exception=True)
-        for k, v in s.validated_data.items():
+        d = s.validated_data
+        try:
+            validate_rack_update(obj, d.get("total_u", obj.total_u),
+                                 d.get("rated_power_kw", obj.rated_power_kw),
+                                 d.get("max_weight_kg", obj.max_weight_kg))
+        except DjangoValidationError as e:
+            raise DRFValidationError(e.messages)
+        for k, v in d.items():
             setattr(obj, k, v)
         obj.save()
         return Response(RackResponseSerializer(obj).data)
