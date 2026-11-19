@@ -14,7 +14,7 @@ def validate_placement(rack, face, start_u, u_size, power_w, weight_kg, exclude_
     for p in qs:
         if start_u <= p.start_u + p.u_size - 1 and p.start_u <= start_u + u_size - 1:
             raise ValidationError("U位冲突：该面指定U位已被占用")
-    if start_u < 1 or start_u + u_size > rack.total_u:
+    if start_u < 1 or start_u + u_size - 1 > rack.total_u:
         raise ValidationError("超出总U数范围")
     u = get_rack_usage(rack)
     if u["used_power_w"] + Decimal(power_w) > rack.rated_power_kw * 1000:

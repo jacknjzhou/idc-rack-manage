@@ -24,7 +24,17 @@ def test_u_conflict_blocked(rack):
 @pytest.mark.django_db
 def test_over_total_u_blocked(rack):
     with pytest.raises(ValidationError, match="总U数"):
-        validate_placement(rack, "A", 9, 2, Decimal("1"), Decimal("1"))
+        validate_placement(rack, "A", 10, 2, Decimal("1"), Decimal("1"))
+
+@pytest.mark.django_db
+def test_last_u_legal(rack):
+    # U10 on a 10U rack is a valid, fully in-range placement.
+    assert validate_placement(rack, "A", 10, 1, Decimal("1"), Decimal("1")) is None
+
+@pytest.mark.django_db
+def test_last_two_u_legal(rack):
+    # U9-U10 occupies the final two U of a 10U rack: still in range.
+    assert validate_placement(rack, "A", 9, 2, Decimal("1"), Decimal("1")) is None
 
 @pytest.mark.django_db
 def test_over_power_blocked(rack):
