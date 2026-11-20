@@ -10,6 +10,7 @@ class PlacementAdmin(admin.ModelAdmin):
     list_filter = ("status", "face", "rack")
     search_fields = ("device__asset_no", "rack__location_code")
     autocomplete_fields = ("device", "rack")  # 依赖设备表与机柜表：搜索式下拉
+    readonly_fields = ("placed_at",)  # auto_now_add 不可编辑，只读展示
     fieldsets = (
         ("放置对象（先建设备与机柜）", {
             "fields": ("device", "rack"),
