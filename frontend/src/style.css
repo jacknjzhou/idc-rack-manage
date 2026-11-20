@@ -1,0 +1,96 @@
+/* ============================================================
+   IDC Rack Manager — 「机房控制室」设计系统
+   深色工业风：数据中心监控大屏的气质，冷色仪表 + 琥珀告警
+   ============================================================ */
+
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap");
+
+:root {
+  /* 底色层：深蓝黑，带一点冷调 */
+  --bg-0: #0a0f16;
+  --bg-1: #0f1720;
+  --bg-2: #141d28;
+  --bg-3: #1a2533;
+  --line: #24313f;
+  --line-bright: #33465a;
+
+  /* 主色：机房青（伺服指示灯色） */
+  --cyan: #2dd4bf;
+  --cyan-dim: rgba(45, 212, 191, 0.12);
+  --cyan-line: rgba(45, 212, 191, 0.35);
+
+  /* 告警琥珀 */
+  --amber: #f59e0b;
+  --amber-dim: rgba(245, 158, 11, 0.14);
+
+  /* 危险红 */
+  --red: #f87171;
+
+  /* 文本 */
+  --t-hi: #e8eef4;
+  --t-mid: #9fb2c4;
+  --t-low: #5c7186;
+
+  /* Element Plus 暗色适配 */
+  --el-color-primary: #2dd4bf;
+  --el-bg-color: var(--bg-1);
+  --el-bg-color-overlay: var(--bg-2);
+  --el-fill-color-blank: var(--bg-2);
+  --el-text-color-primary: var(--t-hi);
+  --el-text-color-regular: var(--t-mid);
+  --el-border-color: var(--line);
+  --el-border-color-light: var(--line);
+  --el-font-family: "Noto Sans SC", sans-serif;
+
+  --mono: "IBM Plex Mono", monospace;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-0);
+  color: var(--t-hi);
+  font-family: "Noto Sans SC", sans-serif;
+  font-size: 14px;
+}
+
+/* 全局氛围：顶部冷光 + 细网格纹理 */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 80% 40% at 50% -10%, rgba(45, 212, 191, 0.07), transparent 60%),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(36, 49, 63, 0.25) 31px 32px),
+    repeating-linear-gradient(90deg, transparent 0 31px, rgba(36, 49, 63, 0.25) 31px 32px);
+  z-index: 0;
+}
+
+#app { position: relative; z-index: 1; }
+
+/* 数字与编号一律等宽字体——机房仪表感 */
+.mono { font-family: var(--mono); }
+
+/* 面板卡片：微弱内发光 + 精细描边 */
+.panel {
+  background: linear-gradient(180deg, var(--bg-2), var(--bg-1));
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.03),
+    0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+/* 页面进场动画 */
+@keyframes rise {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.rise { animation: rise 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.rise-1 { animation-delay: 0.05s; }
+.rise-2 { animation-delay: 0.12s; }
+.rise-3 { animation-delay: 0.2s; }
+.rise-4 { animation-delay: 0.28s; }

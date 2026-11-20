@@ -5,6 +5,7 @@ import RackUPlan from "../components/RackUPlan.vue"
 
 const racks = ref<any[]>([])
 const rackId = ref<number | null>(null)
+const currentRack = ref<any>(null)
 const error = ref("")
 const loading = ref(true)
 
@@ -12,37 +13,105 @@ onMounted(async () => {
   try {
     const r = await apiGet<any>("/api/racks/")
     racks.value = r.results ?? r
-    if (racks.value.length > 0) rackId.value = racks.value[0].id
-    else error.value = "暂无机柜数据。请先到 Django Admin（/admin/）创建机房和机柜。"
+    if (racks.value.length > 0) {
+      rackId.value = racks.value[0].id
+      currentRack.value = racks.value[0]
+    } else {
+      error.value = "暂无机柜数据。请先到 Django Admin（/admin/）创建机房和机柜。"
+    }
   } catch (e: any) {
     error.value = e.message || "加载机柜列表失败"
   } finally {
     loading.value = false
   }
 })
+
+function onRackChange(id: number) {
+  currentRack.value = racks.value.find((r) => r.id === id) || null
+}
 </script>
 
 <template>
   <div class="rack-view">
-    <h2>机柜详情</h2>
-    <p v-if="loading">加载中…</p>
-    <p v-else-if="error" class="error">{{ error }}</p>
-    <template v-else>
-      <label>
-        选择机柜：
-        <select v-model.number="rackId">
-          <option v-for="r in racks" :key="r.id" :value="r.id">
-            {{ r.location_code }}（{{ r.name }}）
-          </option>
-        </select>
-      </label>
-      <RackUPlan v-if="rackId" :rack-id="rackId" />
-    </template>
+    <!-- 顶栏 -->
+    <header class="topbar panel rise">
+      <div class="brand">
+        <span class="brand-mark"></span>
+        <div>
+          <h1>IDC 机柜管理</h1>
+          <p class="brand-sub">RACK · POWER · CAPACITY</p>
+        </div>
+      </div>
+      <div class="topbar-right">
+        <el-select v-if="racks.length" v-model="rackId" class="rack-select"
+                   size="large" @change="onRackChange">
+          <el-option v-for="r in racks" :key="r.id" :value="r.id"
+                     :label="`${r.location_code}（${r.name}）`" />
+        </el-select>
+        <el-link v-else-if="!loading" href="/admin/" target="_blank" type="primary">
+          前往 Admin 建档
+        </el-link>
+        <el-tag v-if="currentRack" effect="dark" type="info" class="mono rack-meta">
+          {{ currentRack.total_u }}U · {{ Number(currentRack.rated_power_kw) }}kW ·
+          {{ Number(currentRack.max_weight_kg) }}kg
+        </el-tag>
+      </div>
+    </header>
+
+    <!-- 主区 -->
+    <div v-if="loading" class="loading panel rise rise-1">
+      <el-skeleton :rows="6" animated />
+    </div>
+
+    <el-empty v-else-if="error" :description="error" class="empty rise rise-1">
+      <el-button type="primary" tag="a" href="/admin/" target="_blank">
+        打开 Django Admin
+      </el-button>
+    </el-empty>
+
+    <RackUPlan v-else-if="rackId" :key="rackId" :rack-id="rackId" />
   </div>
 </template>
 
 <style scoped>
-.error { color: #f56c6c; }
-label { display: block; margin-bottom: 12px; }
-select { padding: 4px 8px; }
+.rack-view {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 24px 20px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ---------- 顶栏 ---------- */
+.topbar {
+  display: flex;
+  align-items: center;
+  padding: 16px 22px;
+  gap: 20px;
+}
+.brand { display: flex; align-items: center; gap: 14px; }
+.brand-mark {
+  width: 12px; height: 40px; border-radius: 3px;
+  background: linear-gradient(180deg, var(--cyan), transparent);
+  box-shadow: 0 0 12px rgba(45, 212, 191, 0.5);
+}
+h1 { margin: 0; font-size: 18px; font-weight: 700; letter-spacing: 0.02em; }
+.brand-sub {
+  margin: 2px 0 0;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.35em;
+  color: var(--t-low);
+}
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+.rack-select { width: 240px; }
+.rack-meta { font-size: 12px; color: var(--t-mid); }
+
+.loading, .empty { padding: 40px; }
+
+@media (max-width: 700px) {
+  .topbar { flex-direction: column; align-items: stretch; }
+  .topbar-right { margin-left: 0; }
+}
 </style>
