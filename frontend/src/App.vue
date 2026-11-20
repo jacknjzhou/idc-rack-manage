@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import RackView from "./views/RackView.vue"
 import ThemeSwitcher from "./components/ThemeSwitcher.vue"
 </script>
 
 <template>
   <div class="app-shell">
     <ThemeSwitcher />
-    <RackView />
+    <router-view />
   </div>
 </template>
 
