@@ -8,7 +8,8 @@ from drf_spectacular.utils import extend_schema_view, extend_schema, OpenApiType
 from .models import Rack
 from .serializers import RackRequestSerializer, RackResponseSerializer
 from .reporting import usage_payload, uplan_payload, export_devices_csv
-from .schema import UsageResponseSerializer, UPlanResponseSerializer
+from .dashboard import dashboard_payload
+from .schema import UsageResponseSerializer, UPlanResponseSerializer, DashboardResponseSerializer
 from apps.placements.validation import validate_rack_update
 
 
@@ -81,6 +82,12 @@ class RackViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["get"])
     def uplan(self, request, pk=None):
         return Response(uplan_payload(self.get_object()))
+
+    @extend_schema(request=None, responses={200: DashboardResponseSerializer},
+                   summary="全局总览大屏聚合", tags=["机柜视图"])
+    @action(detail=False, methods=["get"])
+    def dashboard(self, request):
+        return Response(dashboard_payload())
 
     @extend_schema(request=None,
                    responses={(200, "text/csv"): OpenApiTypes.BINARY}, tags=["机柜视图"])

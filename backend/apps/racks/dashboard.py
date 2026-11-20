@@ -8,7 +8,8 @@ WARN_RATIO = Decimal("0.8")
 
 
 def _rack_status(load_ratio, used_power_w, rack) -> str:
-    if load_ratio > ALERT_RATIO or used_power_w > rack.rated_power_kw * 1000:
+    """阈值：>0.9 alert、>0.8 warn（>=0.9 亦视为 alert，浮点边界归 alert）。"""
+    if load_ratio >= ALERT_RATIO or used_power_w > rack.rated_power_kw * 1000:
         return "alert"
     if load_ratio > WARN_RATIO:
         return "warn"
