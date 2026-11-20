@@ -31,7 +31,7 @@
 - Consumes: `get_rack_usage(rack) -> dict`（含 used_u_by_face/remaining_u_by_face/used_power_w/used_weight_kg/load_ratio/load_ratio_is_estimate）；`get_warnings(rack) -> list`
 - Produces: `dashboard_payload() -> dict`，结构见 spec（summary + rooms[].racks[]）
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```python
 # backend/apps/racks/tests/test_dashboard.py
@@ -77,12 +77,12 @@ def test_dashboard_payload_and_status_thresholds():
     assert racks["R1-A02"]["power"]["used_w"] == 900
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T -e IDC_DISABLE_PERMISSIONS=1 web pytest apps/racks/tests/test_dashboard.py -v`
 Expected: FAIL（404，路由不存在）
 
-- [ ] **Step 3: 实现 dashboard_payload**
+- [x] **Step 3: 实现 dashboard_payload**
 
 ```python
 # backend/apps/racks/dashboard.py
@@ -147,12 +147,12 @@ def dashboard_payload() -> dict:
     }
 ```
 
-- [ ] **Step 4: 跑测试确认通过**
+- [x] **Step 4: 跑测试确认通过**
 
 Run: `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T -e IDC_DISABLE_PERMISSIONS=1 web pytest apps/racks/tests/test_dashboard.py -v`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/apps/racks/dashboard.py backend/apps/racks/tests/test_dashboard.py
@@ -171,7 +171,7 @@ git commit -m "feat: dashboard aggregation payload with rack status thresholds"
 - Consumes: `dashboard_payload() -> dict`（Task 1）
 - Produces: `GET /api/racks/dashboard/` 端点
 
-- [ ] **Step 1: 在 schema.py 追加响应 Serializer**
+- [x] **Step 1: 在 schema.py 追加响应 Serializer**
 
 ```python
 class RackDashSerializer(serializers.Serializer):
@@ -200,7 +200,7 @@ class DashboardResponseSerializer(serializers.Serializer):
     rooms = RoomDashSerializer(many=True)
 ```
 
-- [ ] **Step 2: views.py 挂 action**
+- [x] **Step 2: views.py 挂 action**
 
 ```python
 from .dashboard import dashboard_payload
@@ -213,7 +213,7 @@ from .schema import UsageResponseSerializer, UPlanResponseSerializer, DashboardR
         return Response(dashboard_payload())
 ```
 
-- [ ] **Step 3: 全量回归 + 手动验证**
+- [x] **Step 3: 全量回归 + 手动验证**
 
 Run: `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T -e IDC_DISABLE_PERMISSIONS=1 web pytest -q`
 Expected: 68 passed（64 + 4 新增；若数量不同以全绿为准）
@@ -221,7 +221,7 @@ Expected: 68 passed（64 + 4 新增；若数量不同以全绿为准）
 Run: `curl -s http://localhost:8000/api/racks/dashboard/`（带认证 cookie 时）或 Swagger `/api/docs/` 检查端点出现
 Expected: 返回 JSON，含 summary 与 rooms
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add backend/apps/racks/views.py backend/apps/racks/schema.py
@@ -242,12 +242,12 @@ git commit -m "feat: GET /api/racks/dashboard/ endpoint"
 **Interfaces:**
 - Produces: 路由 `/` → OverviewView（Task 4 创建，先建占位），`/rack/:id` → RackView；`router` 导出供测试
 
-- [ ] **Step 1: 安装依赖**
+- [x] **Step 1: 安装依赖**
 
 Run: `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T frontend npm install vue-router@4`
 Expected: package.json dependencies 出现 `"vue-router": "^4.x"`
 
-- [ ] **Step 2: 创建 router.ts**
+- [x] **Step 2: 创建 router.ts**
 
 ```typescript
 // frontend/src/router.ts
@@ -263,7 +263,7 @@ export const router = createRouter({
 })
 ```
 
-- [ ] **Step 3: main.ts 挂 router；App.vue 改 router-view + 顶部返回入口**
+- [x] **Step 3: main.ts 挂 router；App.vue 改 router-view + 顶部返回入口**
 
 main.ts：`createApp(App).use(ElementPlus).use(router).mount("#app")`（保留 theme 导入在 App 之前）。
 
@@ -278,7 +278,7 @@ App.vue template：
 </template>
 ```
 
-- [ ] **Step 4: 创建 OverviewView 占位组件（Task 4 填充），RackView 适配路由**
+- [x] **Step 4: 创建 OverviewView 占位组件（Task 4 填充），RackView 适配路由**
 
 ```vue
 <!-- frontend/src/views/OverviewView.vue 占位 -->
@@ -287,12 +287,12 @@ App.vue template：
 
 RackView.vue 的 `onMounted` 中：读取 `useRoute().params.id`，若存在且在列表中则预选该机柜；顶栏左侧品牌区改为 `<RouterLink to="/">← 总览</RouterLink>` 链接 + 标题。
 
-- [ ] **Step 5: 验证构建与现有测试**
+- [x] **Step 5: 验证构建与现有测试**
 
 Run: `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T frontend npm run build && docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T frontend npm test`
 Expected: build ✓；测试全绿（RackUPlan.spec 不受影响）
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/package.json frontend/package-lock.json frontend/src/router.ts frontend/src/main.ts frontend/src/App.vue frontend/src/views/OverviewView.vue frontend/src/views/RackView.vue
@@ -311,7 +311,7 @@ git commit -m "feat: vue-router with overview and rack routes"
 - Consumes: `GET /api/racks/dashboard/` 响应结构（Task 2）；`apiGet`；设计系统 `.panel/.mono/.rise` 与主题 CSS 变量
 - Produces: 大屏页；点击竖条 `router.push(/rack/${id})`
 
-- [ ] **Step 1: 写失败测试**
+- [x] **Step 1: 写失败测试**
 
 ```typescript
 // frontend/src/__tests__/Overview.spec.ts
@@ -360,12 +360,12 @@ describe("OverviewView", () => {
 })
 ```
 
-- [ ] **Step 2: 跑测试确认失败**
+- [x] **Step 2: 跑测试确认失败**
 
 Run: `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T frontend npm test`
 Expected: FAIL（占位组件无 .rack-bar）
 
-- [ ] **Step 3: 实现大屏组件**
+- [x] **Step 3: 实现大屏组件**
 
 结构（完整实现，延续「机房控制室」设计系统）：
 
@@ -413,17 +413,17 @@ const open = (id: number) => router.push(`/rack/${id}`)
 - 加载中：`el-skeleton`；错误：`el-empty :description="error"`
 - 样式全部用 CSS 变量，明暗主题均生效；进场用 `.rise` 交错延迟
 
-- [ ] **Step 4: 跑测试确认通过 + 构建验证**
+- [x] **Step 4: 跑测试确认通过 + 构建验证**
 
 Run: `docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T frontend npm test && docker compose -f docker-compose.yml -f docker-compose.dev.yml exec -T frontend npm run build`
 Expected: 测试全绿；build ✓（vue-tsc 无类型错误）
 
-- [ ] **Step 5: 手动浏览器验证（dev server 5173）**
+- [x] **Step 5: 手动浏览器验证（dev server 5173）**
 
 - `/` 显示大屏；明暗主题各看一遍；点告警数过滤；点竖条跳 `/rack/:id` 且单柜页正确预选
 - 30s 后 Network 面板出现第二次 dashboard 请求
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add frontend/src/views/OverviewView.vue frontend/src/__tests__/Overview.spec.ts
@@ -437,17 +437,17 @@ git commit -m "feat: overview dashboard with rack bars, alert filter and polling
 **Files:**
 - Modify: `README.md`（访问入口表加 `/` 总览大屏说明、API 速查表加 `GET /api/racks/dashboard/`）
 
-- [ ] **Step 1: 更新 README 两处**
+- [x] **Step 1: 更新 README 两处**
 
 访问入口表加一行：`总览大屏 | http://localhost:5173/（生产 80）/ | 全局机柜占用与告警`。
 API 速查表加：`GET /api/racks/dashboard/ | 全局总览聚合（summary + rooms[].racks[]，status: ok/warn/alert）`。
 
-- [ ] **Step 2: 全量验证**
+- [x] **Step 2: 全量验证**
 
 Run: 后端全量 pytest（须 68+ 全绿）+ 前端 `npm test` + `npm run build` + `curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/`
 Expected: 全绿、200
 
-- [ ] **Step 3: Commit + Push**
+- [x] **Step 3: Commit + Push**
 
 ```bash
 git add README.md
