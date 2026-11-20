@@ -1,7 +1,11 @@
 <script setup lang="ts">
-import { ref, onMounted } from "vue"
+import { ref, onMounted, watch } from "vue"
+import { useRoute, useRouter } from "vue-router"
 import { apiGet } from "../api"
 import RackUPlan from "../components/RackUPlan.vue"
+
+const route = useRoute()
+const router = useRouter()
 
 const racks = ref<any[]>([])
 const rackId = ref<number | null>(null)
@@ -9,13 +13,20 @@ const currentRack = ref<any>(null)
 const error = ref("")
 const loading = ref(true)
 
+// 同步路由 /rack/:id → 下拉选择
+rackId.value = Number(route.params.id) || null
+
 onMounted(async () => {
   try {
     const r = await apiGet<any>("/api/racks/")
     racks.value = r.results ?? r
     if (racks.value.length > 0) {
-      rackId.value = racks.value[0].id
-      currentRack.value = racks.value[0]
+      if (!rackId.value || !racks.value.some((r) => r.id === rackId.value)) {
+        // 无路由参数或参数无效 → 取第一台并回写 URL
+        rackId.value = racks.value[0].id
+        router.replace(`/rack/${rackId.value}`)
+      }
+      currentRack.value = racks.value.find((r) => r.id === rackId.value)
     } else {
       error.value = "暂无机柜数据。请先到 Django Admin（/admin/）创建机房和机柜。"
     }
@@ -26,8 +37,16 @@ onMounted(async () => {
   }
 })
 
+watch(() => route.params.id, (v) => {
+  const id = Number(v) || null
+  if (id && id !== rackId.value) rackId.value = id
+})
+
 function onRackChange(id: number) {
+  rackId.value = id
   currentRack.value = racks.value.find((r) => r.id === id) || null
+  // 下拉切换同步写 URL，刷新/分享不丢状态
+  if (String(route.params.id) !== String(id)) router.replace(`/rack/${id}`)
 }
 </script>
 
