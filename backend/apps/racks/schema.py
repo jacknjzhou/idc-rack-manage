@@ -23,3 +23,29 @@ class UPlanCellSerializer(serializers.Serializer):
 class UPlanResponseSerializer(serializers.Serializer):
     A = serializers.ListField(child=UPlanCellSerializer(), allow_null=True)
     B = serializers.ListField(child=UPlanCellSerializer(), allow_null=True)
+
+
+class RackDashSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    location_code = serializers.CharField()
+    name = serializers.CharField()
+    total_u = serializers.IntegerField()
+    used_u = serializers.DictField(child=serializers.IntegerField())
+    load_ratio = serializers.FloatField()
+    load_ratio_is_estimate = serializers.BooleanField()
+    power = serializers.DictField(child=serializers.FloatField())
+    weight = serializers.DictField(child=serializers.FloatField())
+    warnings = serializers.ListField(child=serializers.CharField())
+    status = serializers.ChoiceField(choices=["ok", "warn", "alert"])
+
+
+class RoomDashSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    code = serializers.CharField()
+    name = serializers.CharField()
+    racks = RackDashSerializer(many=True)
+
+
+class DashboardResponseSerializer(serializers.Serializer):
+    summary = serializers.DictField(child=serializers.JSONField())
+    rooms = RoomDashSerializer(many=True)

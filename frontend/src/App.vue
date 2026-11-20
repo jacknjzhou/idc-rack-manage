@@ -1,7 +1,16 @@
 <script setup lang="ts">
-import RackView from "./views/RackView.vue"
+import ThemeSwitcher from "./components/ThemeSwitcher.vue"
+import TopNav from "./components/TopNav.vue"
 </script>
 
 <template>
-  <RackView />
+  <div class="app-shell">
+    <TopNav />
+    <ThemeSwitcher />
+    <router-view />
+  </div>
 </template>
+
+<style scoped>
+.app-shell { min-height: 100vh; }
+</style>
