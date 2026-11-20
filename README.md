@@ -67,7 +67,7 @@ $DC exec web python manage.py createsuperuser
 运行测试：
 
 ```bash
-$DC exec web pytest -v                          # 后端（64 个测试）
+$DC exec web pytest -v                          # 后端（65 个测试）
 $DC exec frontend npm test                      # 前端组件测试
 $DC exec frontend npm run build                 # 前端生产构建检查
 ```
@@ -89,11 +89,14 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml exec web python 
 
 | 入口 | 开发环境 | 生产环境 |
 |---|---|---|
-| 前端页面（机柜 U 位图） | http://localhost:5173/ | http://localhost/（80 端口） |
+| 前端页面（总览大屏 `/`） | http://localhost:5173/ | http://localhost/（80 端口） |
+| 前端页面（单柜 U 位图 `/rack/:id`） | http://localhost:5173/rack/1 | http://localhost/rack/1 |
 | Django Admin（数据维护后台） | http://localhost:8000/admin/ | http://localhost:8000/admin/ |
 | API 接口文档（Swagger UI） | http://localhost:8000/api/docs/ | http://localhost:8000/api/docs/ |
 | OpenAPI Schema（原始 JSON/YAML） | http://localhost:8000/api/schema/ | 同左 |
 | DRF API 根 | http://localhost:8000/api/ | 同左 |
+
+总览大屏（`/`）按机房分组展示机柜竖条矩阵：A/B 面填充度、负载率、告警状态（ok/warn/alert）标色，>90% 红色呼吸光告警；顶部汇总条显示机房/机柜/设备数、平均负载与告警数（点击可过滤只看告警柜）；悬停显示功率/承重/U 位详情，点击机柜跳转单柜视图；数据每 30 秒自动刷新。聚合接口：`GET /api/racks/dashboard/`。
 
 默认管理员：`admin / admin123`（首次部署后请立即在 Admin 右上角「修改密码」）。
 
@@ -127,6 +130,7 @@ docker compose -f docker-compose.yml -f docker-compose.prod.yml exec web python 
 | 机柜用量 | `/api/racks/{id}/usage/` | 剩余U/功率/承重/负载率/告警 |
 | 机柜U位图 | `/api/racks/{id}/uplan/` | A/B 两面逐 U 占用明细 |
 | 机柜设备导出 | `/api/racks/{id}/export_devices/` | CSV 导出 |
+| 全局总览大屏 | `/api/racks/dashboard/` | 机房×机柜聚合 + 告警状态 |
 | 设备 | `/api/devices/` | CRUD |
 | 放置 | `/api/placements/` | 上架（POST）、下架（`{id}/remove/`）、移位（`{id}/move/`） |
 | 审计日志 | `/api/auditlog/` | 只读查询 |
