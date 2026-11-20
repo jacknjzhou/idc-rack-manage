@@ -29,3 +29,4 @@ services:
 
 volumes:
   pgdata:
+  frontend_node_modules:
